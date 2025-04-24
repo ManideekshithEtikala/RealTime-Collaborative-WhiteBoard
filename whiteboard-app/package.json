@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-keycloak/web": "^3.4.0",
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@testing-library/dom": "^10.4.0",
@@ -52,6 +53,7 @@
     ]
   },
   "devDependencies": {
+    "@types/keycloak-js": "^2.5.4",
     "@types/uuid": "^10.0.0"
   }
 }

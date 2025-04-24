@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Stage, Layer, Line, Circle } from 'react-konva';
 import { io } from 'socket.io-client';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useParams } from 'react-router-dom';
 
@@ -21,7 +20,9 @@ interface CursorData {
   color: string;
 }
 
-const socket = io('http://localhost:3500'); // Replace with your WebSocket server URL
+const socket = io('http://localhost:3500',{
+  withCredentials: true,
+}); // Replace with your WebSocket server URL
 
 export default function Whiteboard() {
   const [lines, setLines] = useState<LineData[]>([]);
