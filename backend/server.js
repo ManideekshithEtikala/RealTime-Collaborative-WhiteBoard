@@ -4,12 +4,26 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// Enable CORS only for frontend origin
+app.use(cors({
+  origin: 'http://localhost:3000/',
+  credentials: true,
+}));
+
+// Optionally set security headers
+app.use((req, res, next) => {
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  next();
+});
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow all origins (adjust for production)
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -19,64 +33,58 @@ const sessions = {};
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Handle joining a session
   socket.on('join-session', (sessionId) => {
     socket.join(sessionId);
     console.log(`User ${socket.id} joined session ${sessionId}`);
 
-    // Initialize session state if it doesn't exist
     if (!sessions[sessionId]) {
       sessions[sessionId] = { lines: [], redoStack: [] };
     }
   });
 
-  // Handle request for the current state
   socket.on('request-state', (sessionId) => {
     const sessionState = sessions[sessionId];
     if (sessionState) {
-      socket.emit('current-state', sessionState); // Send the current state to the requesting user
+      socket.emit('current-state', sessionState);
     }
   });
 
   socket.on('cursor-update', (data) => {
     const { sessionId, ...cursorData } = data;
-    socket.to(sessionId).emit('cursor-update', cursorData); // Broadcast to all users in the session except the sender
+    socket.to(sessionId).emit('cursor-update', cursorData);
   });
-  // Handle drawing data
+
   socket.on('drawing-data', (data) => {
     const { sessionId, line } = data;
     if (sessions[sessionId]) {
-      sessions[sessionId].lines.push(line); // Update the session state
-      io.to(sessionId).emit('drawing-data', line); // Broadcast to all users in the session
+      sessions[sessionId].lines.push(line);
+      io.to(sessionId).emit('drawing-data', line);
     }
   });
 
-  // Handle undo action
   socket.on('undo-action', (data) => {
     const { sessionId, lines, redoStack } = data;
     if (sessions[sessionId]) {
-      sessions[sessionId].lines = lines; // Update the session state
+      sessions[sessionId].lines = lines;
       sessions[sessionId].redoStack = redoStack;
-      io.to(sessionId).emit('undo-action', data); // Broadcast to all users in the session
+      io.to(sessionId).emit('undo-action', data);
     }
   });
 
-  // Handle redo action
   socket.on('redo-action', (data) => {
     const { sessionId, lines, redoStack } = data;
     if (sessions[sessionId]) {
-      sessions[sessionId].lines = lines; // Update the session state
+      sessions[sessionId].lines = lines;
       sessions[sessionId].redoStack = redoStack;
-      io.to(sessionId).emit('redo-action', data); // Broadcast to all users in the session
+      io.to(sessionId).emit('redo-action', data);
     }
   });
 
-  // Handle clear canvas action
   socket.on('clear-canvas', (sessionId) => {
     if (sessions[sessionId]) {
-      sessions[sessionId].lines = []; // Clear the session state
+      sessions[sessionId].lines = [];
       sessions[sessionId].redoStack = [];
-      io.to(sessionId).emit('clear-canvas'); // Broadcast to all users in the session
+      io.to(sessionId).emit('clear-canvas');
     }
   });
 
