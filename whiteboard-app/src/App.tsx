@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
+import keycloak from './keycloak'; // Keycloak configuration
 import Whiteboard from './components/WhiteBoard';
 import ImageClassifier from './components/ImageClassifier';
 import Home from './components/Home';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Ensure Keycloak is initialized only once
+    if (!keycloak.authenticated) {
+      keycloak.init({ onLoad: 'login-required' }).then((authenticated: boolean) => {
+        setIsAuthenticated(authenticated);
+      });
+    }
+  }, []);
+
+  // Show a loading screen while Keycloak initializes
+  if (!isAuthenticated) {
+    return <div className="text-center mt-5">Loading...</div>;
+  }
+
   return (
     <div className="App">
       {/* Header Section */}
@@ -28,6 +41,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/session/:id" element={<Whiteboard />} />
             <Route path="/image-classifier" element={<ImageClassifier />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
       </main>
