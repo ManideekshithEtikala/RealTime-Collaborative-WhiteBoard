@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Whiteboard from './components/WhiteBoard';
 import ImageClassifier from './components/ImageClassifier';
 import Home from './components/Home';
+import Invitationsystem from './components/Invitationsystem';
 
 
 function App() {
@@ -55,7 +56,7 @@ function App() {
 
   return (
     <div className="App">
-      <header className="bg-dark text-white text-center py-4 shadow">
+      <header className="bg-primary text-white text-center py-4 shadow fw-bold fs-4"> 
         <div className="container">
           <h1 className="display-5">Real-Time Collaborative Whiteboard</h1>
           <p className="lead">Collaborate, draw, and classify images seamlessly</p>
@@ -72,12 +73,6 @@ function App() {
           </Routes>
         </Router>
       </main>
-
-      <footer className="bg-dark text-white text-center py-3 mt-4">
-        <div className="container">
-          <p className="mb-0">© 2025 Collaborative Whiteboard. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }

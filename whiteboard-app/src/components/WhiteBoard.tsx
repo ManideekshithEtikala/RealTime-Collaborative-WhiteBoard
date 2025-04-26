@@ -1,10 +1,10 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Stage, Layer, Line, Circle } from 'react-konva';
-import { io } from 'socket.io-client';
-import jsPDF from 'jspdf';
-import { useParams } from 'react-router-dom';
-
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useRef, useState, useEffect } from "react";
+import { Stage, Layer, Line, Circle } from "react-konva";
+import { io } from "socket.io-client";
+import jsPDF from "jspdf";
+import { useParams, useNavigate } from "react-router-dom";
+import InviteModal from "./Invitationsystem";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 interface LineData {
   tool: string;
@@ -20,95 +20,136 @@ interface CursorData {
   color: string;
 }
 
-const socket = io('http://localhost:3500',{
+interface ChatMessage {
+  userId: string;
+  message: string;
+}
+
+const socket = io("http://localhost:3500", {
   withCredentials: true,
-}); // Replace with your WebSocket server URL
+});
 
 export default function Whiteboard() {
+
   const [lines, setLines] = useState<LineData[]>([]);
   const [redoStack, setRedoStack] = useState<LineData[]>([]);
-  const [tool, setTool] = useState('pen');
-  const [strokeColor, setStrokeColor] = useState('#000000');
+  const [tool, setTool] = useState("pen");
+  const [strokeColor, setStrokeColor] = useState("#000000");
   const [strokeWidth, setStrokeWidth] = useState(3);
-  const [cursors, setCursors] = useState<CursorData[]>([]); // Real-time cursor data
+  const [cursors, setCursors] = useState<CursorData[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [stageWidth, setStageWidth] = useState(window.innerWidth * 0.75);
+  const [stageHeight, setStageHeight] = useState(window.innerHeight - 200);
   const isDrawing = useRef(false);
   const stageRef = useRef<any>(null);
   const { id: sessionId } = useParams();
+  const navigate = useNavigate();
+
 
   useEffect(() => {
-    // Join the session
-    socket.emit('join-session', sessionId);
+    const handleResize = () => {
+      setStageWidth(window.innerWidth * 0.75);
+      setStageHeight(window.innerHeight - 200);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
-    // Request the current state of the whiteboard
-    socket.emit('request-state', sessionId);
+  useEffect(() => {
+    socket.emit("join-session", sessionId);
+    socket.emit("request-state", sessionId);
 
-    // Listen for the current state from the server
-    socket.on('current-state', (data: { lines: LineData[]; redoStack: LineData[] }) => {
-      if (data && data.lines && data.redoStack) {
-        setLines(data.lines); // Update the lines state with the current state
-        setRedoStack(data.redoStack); // Update the redoStack state with the current state
+    socket.on(
+      "current-state",
+      (data: { lines: LineData[]; redoStack: LineData[] }) => {
+        if (data) {
+          setLines(data.lines);
+          setRedoStack(data.redoStack);
+        }
+      }
+    );
+
+    socket.on("cursor-update", (cursor: CursorData) => {
+      const stageNode = stageRef.current;
+      const stageBounds = stageNode.getClientRect();
+      const cursorX = cursor.x;
+      const cursorY = cursor.y;
+
+      if (
+        cursorX >= stageBounds.x && cursorX <= stageBounds.x + stageBounds.width &&
+        cursorY >= stageBounds.y && cursorY <= stageBounds.y + stageBounds.height
+      ) {
+        setCursors((prev) => {
+          const filteredCursors = prev.filter((c) => c.userId !== cursor.userId);
+          return [...filteredCursors, cursor];
+        });
       }
     });
 
-    // Listen for cursor updates from other users
-    socket.on('cursor-update', (cursor: CursorData) => {
-      setCursors((prevCursors) => {
-        const updatedCursors = prevCursors.filter((c) => c.userId !== cursor.userId);
-        return [...updatedCursors, cursor];
-      });
+    socket.on("drawing-data", ({ line }: { line: LineData }) => {
+      setLines((prev) => [...prev, line]);
     });
 
-    // Listen for drawing updates from other users
-    socket.on('drawing-data', (newLine: LineData) => {
-      setLines((prevLines) => [...prevLines, newLine]);
-    });
+    socket.on(
+      "undo-action",
+      (data: { lines: LineData[]; redoStack: LineData[] }) => {
+        setLines(data.lines);
+        setRedoStack(data.redoStack);
+      }
+    );
 
-    // Listen for undo actions
-    socket.on('undo-action', (data: { lines: LineData[]; redoStack: LineData[] }) => {
-      setLines(data.lines);
-      setRedoStack(data.redoStack);
-    });
+    socket.on(
+      "redo-action",
+      (data: { lines: LineData[]; redoStack: LineData[] }) => {
+        setLines(data.lines);
+        setRedoStack(data.redoStack);
+      }
+    );
 
-    // Listen for redo actions
-    socket.on('redo-action', (data: { lines: LineData[]; redoStack: LineData[] }) => {
-      setLines(data.lines);
-      setRedoStack(data.redoStack);
-    });
-
-    // Listen for clear canvas action
-    socket.on('clear-canvas', () => {
+    socket.on("clear-canvas", () => {
       setLines([]);
       setRedoStack([]);
     });
 
+    socket.on("chat-message", (msg: ChatMessage) => {
+      setChatMessages((prev) => [...prev, msg]);
+    });
+
     return () => {
-      socket.off('current-state');
-      socket.off('drawing-data');
-      socket.off('undo-action');
-      socket.off('redo-action');
-      socket.off('cursor-update');
-      socket.off('clear-canvas');
+      socket.off("current-state");
+      socket.off("drawing-data");
+      socket.off("undo-action");
+      socket.off("redo-action");
+      socket.off("cursor-update");
+      socket.off("clear-canvas");
+      socket.off("chat-message");
     };
   }, [sessionId]);
 
   const handleMouseDown = (e: any) => {
     isDrawing.current = true;
-    const stage = e.target.getStage();
-    const point = stage.getPointerPosition();
-    const newLine = { tool, points: [point.x, point.y], stroke: strokeColor, strokeWidth };
-    setRedoStack([]); // Clear redo stack on new action
-    setLines([...lines, newLine]);
-
-    // Emit the new line to the server
-    socket.emit('drawing-data', { sessionId, line: newLine });
+    const point = e.target.getStage().getPointerPosition();
+    if (!point) return;
+    const newLine: LineData = {
+      tool,
+      points: [point.x, point.y],
+      stroke: strokeColor,
+      strokeWidth,
+    };
+    setRedoStack([]);
+    setLines((prev) => [...prev, newLine]);
+    socket.emit("drawing-data", { sessionId, line: newLine });
   };
 
   const handleMouseMove = (e: any) => {
-    const stage = e.target.getStage();
-    const point = stage.getPointerPosition();
+    const point = e.target.getStage().getPointerPosition();
+    if (!point) return;
 
-    // Broadcast cursor position to other users
-    socket.emit('cursor-update', {
+    socket.emit("cursor-update", {
       sessionId,
       x: point.x,
       y: point.y,
@@ -116,85 +157,98 @@ export default function Whiteboard() {
       color: strokeColor,
     });
 
-    if (!isDrawing.current) return;
+    if (!isDrawing.current || lines.length === 0) return;
 
-    // Update the last line with the new point
-    const lastLine = lines[lines.length - 1];
+    const lastLine = { ...lines[lines.length - 1] };
     lastLine.points = lastLine.points.concat([point.x, point.y]);
-    lines.splice(lines.length - 1, 1, lastLine);
-    setLines(lines.concat());
+    const updatedLines = [...lines.slice(0, -1), lastLine];
+    setLines(updatedLines);
 
-    // Emit the updated line to the server
-    socket.emit('drawing-data', { sessionId, line: lastLine });
+    socket.emit("drawing-data", { sessionId, line: lastLine });
   };
 
   const handleMouseUp = () => {
     isDrawing.current = false;
-
-    // Optionally, emit an event to indicate the drawing action is complete
-    socket.emit('drawing-complete', { sessionId });
+    socket.emit("drawing-complete", { sessionId });
   };
 
   const undo = (emit = true) => {
-    if (lines.length === 0) return;
+    if (!lines.length) return;
     const newLines = [...lines];
     const lastLine = newLines.pop();
-    setRedoStack([...redoStack, lastLine!]);
+    if (!lastLine) return;
+    const newRedoStack = [...redoStack, lastLine];
+    setRedoStack(newRedoStack);
     setLines(newLines);
-
-    if (emit) {
-      socket.emit('undo-action', { sessionId, lines: newLines, redoStack: [...redoStack, lastLine!] });
-    }
+    if (emit)
+      socket.emit("undo-action", {
+        sessionId,
+        lines: newLines,
+        redoStack: newRedoStack,
+      });
   };
 
   const redo = (emit = true) => {
-    if (redoStack.length === 0) return;
+    if (!redoStack.length) return;
     const newRedoStack = [...redoStack];
     const lastRedo = newRedoStack.pop();
-    setLines([...lines, lastRedo!]);
+    if (!lastRedo) return;
+    const newLines = [...lines, lastRedo];
+    setLines(newLines);
     setRedoStack(newRedoStack);
-
-    if (emit) {
-      socket.emit('redo-action', { sessionId, lines: [...lines, lastRedo!], redoStack: newRedoStack });
-    }
+    if (emit)
+      socket.emit("redo-action", {
+        sessionId,
+        lines: newLines,
+        redoStack: newRedoStack,
+      });
   };
 
   const clearCanvas = () => {
     setLines([]);
     setRedoStack([]);
-    socket.emit('clear-canvas', sessionId); // Emit the clear-canvas event with sessionId
+    socket.emit("clear-canvas", sessionId);
   };
 
   const changeTool = (newTool: string) => {
     setTool(newTool);
-    socket.emit('tool-change', { tool: newTool, color: strokeColor, size: strokeWidth });
+    socket.emit("tool-change", {
+      tool: newTool,
+      color: strokeColor,
+      size: strokeWidth,
+    });
   };
 
   const changeColor = (newColor: string) => {
     setStrokeColor(newColor);
-    socket.emit('tool-change', { tool, color: newColor, size: strokeWidth });
+    socket.emit("tool-change", { tool, color: newColor, size: strokeWidth });
   };
 
   const changeSize = (newSize: number) => {
     setStrokeWidth(newSize);
-    socket.emit('tool-change', { tool, color: strokeColor, size: newSize });
+    socket.emit("tool-change", { tool, color: strokeColor, size: newSize });
   };
 
   const saveAsImage = async () => {
-    const stage = stageRef.current;
-    const dataURL = stage.toDataURL({ pixelRatio: 2 });
-    const link = document.createElement('a');
-    link.download = 'whiteboard.png';
+    const dataURL = stageRef.current.toDataURL({ pixelRatio: 2 });
+    const link = document.createElement("a");
+    link.download = "whiteboard.png";
     link.href = dataURL;
     link.click();
   };
 
   const saveAsPDF = async () => {
-    const stage = stageRef.current;
-    const dataURL = stage.toDataURL({ pixelRatio: 2 });
+    const dataURL = stageRef.current.toDataURL({ pixelRatio: 2 });
     const pdf = new jsPDF();
-    pdf.addImage(dataURL, 'PNG', 10, 10, 190, 0); // Adjust dimensions as needed
-    pdf.save('whiteboard.pdf');
+    pdf.addImage(dataURL, "PNG", 10, 10, 190, 0);
+    pdf.save("whiteboard.pdf");
+  };
+
+  const sendMessage = () => {
+    if (!chatInput.trim()) return;
+    const msg = { userId: socket.id, message: chatInput };
+    socket.emit("chat-message", { sessionId, ...msg });
+    setChatInput("");
   };
 
   return (
@@ -203,85 +257,121 @@ export default function Whiteboard() {
         <div className="col-12">
           <div className="d-flex flex-wrap justify-content-between align-items-center bg-light p-3 rounded shadow-sm">
             <div className="d-flex flex-wrap align-items-center">
-              <button className="btn btn-danger me-2 mb-2" onClick={() => undo()} disabled={lines.length === 0}>
+              <button
+                className="btn btn-danger me-2 mb-2"
+                onClick={() => undo()}
+                disabled={!lines.length}
+              >
                 Undo
               </button>
-              <button className="btn btn-warning me-2 mb-2" onClick={() => redo()} disabled={redoStack.length === 0}>
+              <button
+                className="btn btn-warning me-2 mb-2"
+                onClick={() => redo()}
+                disabled={!redoStack.length}
+              >
                 Redo
               </button>
               <button
-                className={`btn me-2 mb-2 ${tool === 'pen' ? 'btn-primary' : 'btn-outline-primary'}`}
-                onClick={() => changeTool('pen')}
+                className={`btn me-2 mb-2 ${
+                  tool === "pen" ? "btn-primary" : "btn-outline-primary"
+                }`}
+                onClick={() => changeTool("pen")}
               >
                 Pen
               </button>
               <button
-                className={`btn mb-2 ${tool === 'eraser' ? 'btn-secondary' : 'btn-outline-secondary'}`}
-                onClick={() => changeTool('eraser')}
+                className={`btn mb-2 ${
+                  tool === "eraser" ? "btn-secondary" : "btn-outline-secondary"
+                }`}
+                onClick={() => changeTool("eraser")}
               >
                 Eraser
               </button>
-              <button className="btn btn-danger ms-2 mb-2" onClick={clearCanvas}>
+              <button
+                className="btn btn-danger ms-2 mb-2"
+                onClick={clearCanvas}
+              >
                 Clear Canvas
               </button>
             </div>
+            
+
             <div className="d-flex flex-wrap align-items-center">
-              <label className="me-2 mb-2">Color:</label>
-              <input
-                type="color"
-                value={strokeColor}
-                onChange={(e) => changeColor(e.target.value)}
-                className="form-control form-control-color me-3 mb-2"
-              />
-              <label className="me-2 mb-2">Size:</label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={strokeWidth}
-                onChange={(e) => changeSize(Number(e.target.value))}
-                className="form-range mb-2"
-              />
+              <div className="me-4 mb-2">
+                <label className="form-label me-2">Color</label>
+                <input
+                  type="color"
+                  value={strokeColor}
+                  onChange={(e) => changeColor(e.target.value)}
+                  className="form-control form-control-color"
+                />
+              </div>
+              <div className="mb-2">
+                <label className="form-label me-2" style={{fontStyle:"serif"}}>Select Brush Size</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={strokeWidth}
+                  onChange={(e) => changeSize(Number(e.target.value))}
+                  className="form-range"
+                />
+              </div>
             </div>
+
             <div className="d-flex flex-wrap align-items-center">
-              <button className="btn btn-success me-2 mb-2" onClick={saveAsImage}>
+              <button
+                className="btn btn-success me-2 mb-2"
+                onClick={saveAsImage}
+              >
                 Save as Image
               </button>
-              <button className="btn btn-success mb-2" onClick={saveAsPDF}>
+              <button className="btn btn-success me-2 mb-2" onClick={saveAsPDF}>
                 Save as PDF
+              </button>
+              <button
+                className="btn btn-dark mb-2"
+                onClick={() => navigate("/image-classifier")}
+              >
+                Go to Image Classifier
               </button>
             </div>
           </div>
         </div>
       </div>
+
       <div className="row">
-        <div className="col-12">
+        <div className="col-md-9 mb-3">
           <div className="border rounded shadow-sm bg-white">
             <Stage
               ref={stageRef}
-              width={window.innerWidth}
-              height={window.innerHeight - 200}
+              width={stageWidth}
+              height={stageHeight}
               onMouseDown={handleMouseDown}
-              onMousemove={handleMouseMove}
-              onMouseup={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
               className="w-100"
             >
               <Layer>
-                {/* Render all lines */}
-                {lines.map((line, i) => (
-                  <Line
-                    key={i}
-                    points={line.points}
-                    stroke={line.stroke}
-                    strokeWidth={line.strokeWidth}
-                    tension={0.5}
-                    lineCap="round"
-                    lineJoin="round"
-                    globalCompositeOperation={line.tool === 'eraser' ? 'destination-out' : 'source-over'}
-                  />
-                ))}
+                {lines
+                  .filter((line) => Array.isArray(line?.points))
+                  .map((line, i) => (
+                    <Line
+                      key={i}
+                      points={line.points}
+                      stroke={line.stroke}
+                      strokeWidth={line.strokeWidth}
+                      tension={0.5}
+                      lineCap="round"
+                      lineJoin="round"
+                      globalCompositeOperation={
+                        line.tool === "eraser"
+                          ? "destination-out"
+                          : "source-over"
+                      }
+                    />
+                  ))}
 
-                {/* Render all cursors */}
                 {cursors.map((cursor, i) => (
                   <Circle
                     key={i}
@@ -296,6 +386,69 @@ export default function Whiteboard() {
             </Stage>
           </div>
         </div>
+
+        <div className="col-md-3">
+  <div className="border rounded shadow-sm bg-light h-100 d-flex flex-column">
+    <div className="p-2 bg-primary text-white text-center fw-bold rounded-top">
+      Live Chat
+    </div>
+    <div
+      className="p-3 overflow-auto flex-grow-1"
+      style={{ height: "calc(100% - 80px)", maxHeight: "calc(100vh - 250px)" }}
+    >
+      {chatMessages.map((msg, index) => (
+        <div
+          key={index}
+          className={`mb-2 d-flex justify-content-${msg.userId === socket.id ? "end" : "start"}`}
+        >
+          <span
+            className={`badge ${
+              msg.userId === socket.id ? "bg-primary" : "bg-secondary"
+            }`}
+            style={{
+              wordWrap: "break-word",
+              maxWidth: "80%",
+              display: "inline-block",
+              padding: "5px 10px",
+              whiteSpace: "pre-wrap",
+              borderRadius: "10px",
+              backgroundColor: msg.userId === socket.id ? "#007bff" : "#6c757d",
+              marginBottom: "5px",
+            }}
+          >
+            {msg.message}
+          </span>
+        </div>
+      ))}
+    </div>
+    <div className="p-3 d-flex flex-column">
+      <input
+        type="text"
+        value={chatInput}
+        onChange={(e) => setChatInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && chatInput.trim()) {
+            sendMessage();
+          }
+        }}
+        className="form-control"
+        placeholder="Type a message"
+      />
+      <button
+        className="btn btn-primary w-100 mt-2"
+        onClick={sendMessage}
+        disabled={!chatInput.trim()}
+      >
+        Send
+      </button>
+    </div>
+  </div>
+</div>
+        <div className="col-md-3">
+        {sessionId && <InviteModal sessionId={sessionId} />}
+        </div>
+
+
       </div>
     </div>
   );

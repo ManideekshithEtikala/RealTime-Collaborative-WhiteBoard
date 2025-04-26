@@ -56,11 +56,19 @@ io.on('connection', (socket) => {
 
   socket.on('drawing-data', (data) => {
     const { sessionId, line } = data;
-    if (sessions[sessionId]) {
+    if (
+      sessions[sessionId] &&
+      line &&
+      Array.isArray(line.points) &&
+      typeof line.stroke === 'string' &&
+      typeof line.tool === 'string' &&
+      typeof line.strokeWidth === 'number'
+    ) {
       sessions[sessionId].lines.push(line);
-      io.to(sessionId).emit('drawing-data', line);
+      io.to(sessionId).emit('drawing-data', { line });
     }
   });
+  
 
   socket.on('undo-action', (data) => {
     const { sessionId, lines, redoStack } = data;
@@ -86,6 +94,11 @@ io.on('connection', (socket) => {
       sessions[sessionId].redoStack = [];
       io.to(sessionId).emit('clear-canvas');
     }
+  });
+
+  socket.on('chat-message', (data) => {
+    const { sessionId, userId, message } = data;
+    io.to(sessionId).emit('chat-message', { userId, message });
   });
 
   socket.on('disconnect', () => {
