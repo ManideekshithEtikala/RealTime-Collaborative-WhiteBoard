@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 
-const FRONTEND_ORIGIN = 'https://real-time-collaborative-white-bo-manideekshithetikalas-projects.vercel.app/';
+const FRONTEND_ORIGIN = 'http://localhost:3000'; // Replace with your frontend URLs
 
 app.use(cors({
   origin: FRONTEND_ORIGIN,

@@ -25,7 +25,7 @@ interface ChatMessage {
   message: string;
 }
 
-const socket = io(process.env.REACT_APP_BACKEND_URL, {
+const socket = io("http://localhost:3500", {
   withCredentials: true,
 });
 
@@ -134,6 +134,7 @@ export default function Whiteboard() {
     isDrawing.current = true;
     const point = e.target.getStage().getPointerPosition();
     if (!point) return;
+  
     const newLine: LineData = {
       tool,
       points: [point.x, point.y],
@@ -142,9 +143,8 @@ export default function Whiteboard() {
     };
     setRedoStack([]);
     setLines((prev) => [...prev, newLine]);
-    socket.emit("drawing-data", { sessionId, line: newLine });
   };
-
+  
   const handleMouseMove = (e: any) => {
     const point = e.target.getStage().getPointerPosition();
     if (!point) return;
