@@ -7,7 +7,7 @@ const app = express();
 
 // Enable CORS only for frontend origin
 app.use(cors({
-  origin: 'http://localhost:3000/',
+  origin: 'https://real-time-collaborati-git-2af49f-manideekshithetikalas-projects.vercel.app/',
   credentials: true,
 }));
 
@@ -21,7 +21,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'https://real-time-collaborati-git-2af49f-manideekshithetikalas-projects.vercel.app/',
     methods: ['GET', 'POST'],
     credentials: true,
   },

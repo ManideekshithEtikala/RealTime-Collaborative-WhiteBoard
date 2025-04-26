@@ -16,7 +16,7 @@ function App() {
     if(isRun.current)return;
     isRun.current=true
     const keycloak = new (Keycloak as any)({
-      url: 'http://localhost:8080',
+      url: process.env.REACT_APP_KEYCLOAK_URL || 'http://localhost:8080/auth',
       realm: 'testyt',
       clientId: 'myclient',
     });
