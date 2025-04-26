@@ -11,7 +11,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8080:8080"
+      - "3500:3500"
     depends_on:
       - keycloak
 
