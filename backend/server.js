@@ -5,13 +5,13 @@ const cors = require('cors');
 
 const app = express();
 
-// Enable CORS only for frontend origin
+const FRONTEND_ORIGIN = 'https://real-time-collaborative-white-bo-manideekshithetikalas-projects.vercel.app/';
+
 app.use(cors({
-  origin: 'https://real-time-collaborati-git-2af49f-manideekshithetikalas-projects.vercel.app/',
+  origin: FRONTEND_ORIGIN,
   credentials: true,
 }));
 
-// Optionally set security headers
 app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
   next();
@@ -21,13 +21,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'https://real-time-collaborati-git-2af49f-manideekshithetikalas-projects.vercel.app/',
+    origin: FRONTEND_ORIGIN,
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
-// Store the state of each session
 const sessions = {};
 
 io.on('connection', (socket) => {
@@ -35,8 +34,6 @@ io.on('connection', (socket) => {
 
   socket.on('join-session', (sessionId) => {
     socket.join(sessionId);
-    console.log(`User ${socket.id} joined session ${sessionId}`);
-
     if (!sessions[sessionId]) {
       sessions[sessionId] = { lines: [], redoStack: [] };
     }
@@ -68,7 +65,6 @@ io.on('connection', (socket) => {
       io.to(sessionId).emit('drawing-data', { line });
     }
   });
-  
 
   socket.on('undo-action', (data) => {
     const { sessionId, lines, redoStack } = data;
@@ -106,7 +102,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3500;
+const PORT = process.env.PORT || 3500;
 server.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
