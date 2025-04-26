@@ -17,9 +17,10 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    command: start-dev
+    container_name: keycloak
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      - KEYCLOAK_ADMIN=test
+      - KEYCLOAK_ADMIN_PASSWORD=test
     ports:
-      - "8081:8080"
+      - "8080:8080"
+    command: start-dev
