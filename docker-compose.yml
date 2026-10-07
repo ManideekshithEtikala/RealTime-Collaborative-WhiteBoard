@@ -1,26 +1,15 @@
-version: "3.8"
-
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-
-  backend:
-    build: ./backend
+  whiteboard:
+    build: .
+    init: true
+    restart: unless-stopped
     ports:
       - "3500:3500"
-    depends_on:
-      - keycloak
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:latest
-    container_name: keycloak
     environment:
-      - KEYCLOAK_ADMIN=test
-      - KEYCLOAK_ADMIN_PASSWORD=test
-    ports:
-      - "8080:8080"
-    command: start-dev
+      NODE_ENV: production
+      DATA_DIR: /data
+      TRUST_PROXY: "${TRUST_PROXY:-false}"
+    volumes:
+      - whiteboard-data:/data
+volumes:
+  whiteboard-data:

@@ -3,44 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@react-keycloak/web": "^3.4.0",
     "@tensorflow-models/mobilenet": "^2.1.1",
-    "@tensorflow/tfjs": "^4.22.0",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "axios": "^1.9.0",
-    "bootstrap": "^5.3.5",
-    "classnames": "^2.5.1",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
-    "keycloak-js": "^26.1.5",
+    "@tensorflow/tfjs-core": "^4.22.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "jspdf": "^4.2.1",
     "konva": "^9.3.20",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-konva": "^19.0.3",
     "react-router-dom": "^7.5.1",
-    "react-scripts": "^5.0.1",
-    "socket.io-client": "^4.8.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "socket.io-client": "^4.8.1"
   },
   "scripts": {
-    "start": "react-scripts start --openssl-legacy-provider",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "start": "vite --config config/vite.config.ts",
+    "build": "tsc --noEmit && vite build --config config/vite.config.ts",
+    "test": "vitest run --config config/vite.config.ts",
+    "test:e2e": "playwright test --config config/playwright.config.ts"
   },
   "browserslist": {
     "production": [
@@ -55,7 +34,18 @@
     ]
   },
   "devDependencies": {
-    "@types/keycloak-js": "^2.5.4",
-    "@types/uuid": "^10.0.0"
-  }
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^5.2.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.11"
+  },
+  "engines": { "node": ">=22.13.0" }
 }

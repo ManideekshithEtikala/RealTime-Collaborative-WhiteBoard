@@ -1,0 +1,30 @@
+.classifier-main { max-width: 1140px; margin: 60px auto; padding: 0 28px; }
+.classifier-main h1 { font-size: clamp(32px, 4vw, 48px); letter-spacing: -1.8px; margin: 12px 0; }
+.classifier-intro { max-width: 660px; color: var(--muted); font-size: 16px; line-height: 1.8; }
+.classifier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
+.classifier-card { border: 1px solid var(--border); background: white; border-radius: 18px; padding: 26px; min-width: 0; }
+.classifier-card h2 { margin: 0 0 20px; font-size: 18px; }
+.image-dropzone { height: 290px; border: 1.5px dashed #d8d5ed; border-radius: 12px; background: #faf9fe; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+.image-dropzone h3 { font-size: 18px; margin-top: 18px; }
+.image-dropzone p { color: var(--muted); font-size: 14px; }
+.upload-icon { color: var(--primary); }
+.image-dropzone img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.image-filename { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.classifier-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.prediction-placeholder { min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; color: var(--primary); }
+.prediction-placeholder h3 { color: var(--ink); font-size: 19px; }
+.prediction-placeholder p, .classifier-note { color: var(--muted); font-size: 13px; line-height: 1.8; }
+.classifier-note { padding-top: 20px; border-top: 1px solid var(--border); }
+.predictions { list-style: none; padding: 10px 0; min-height: 280px; }
+.predictions li { margin: 24px 0; }
+.predictions li > div:first-child { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.predictions strong { flex: 1; text-transform: capitalize; }
+.prediction-rank { color: var(--primary); font-weight: 600; }
+.prediction-track { height: 6px; border-radius: 6px; background: #eeedf8; margin-top: 14px; overflow: hidden; }
+.prediction-track span { display: block; height: 100%; background: var(--primary); }
+.classifier-back { display: inline-flex; gap: 10px; align-items: center; color: var(--primary); margin-top: 32px; font-weight: 600; font-size: 14px; }
+.classifier-spinner { width: 32px; height: 32px; border: 3px solid #eeedf8; border-top-color: var(--primary); border-radius: 50%; animation: classifier-spin 1s linear infinite; }
+.app-fallback { min-height: 70vh; display: flex; gap: 18px; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; }
+@keyframes classifier-spin { to { transform: rotate(360deg); } }
+@media (max-width: 760px) { .classifier-main { margin: 35px auto; padding: 0 18px; } .classifier-grid { grid-template-columns: 1fr; } .classifier-card { padding: 20px; } }
+@media (prefers-reduced-motion: reduce) { .classifier-spinner { animation: none; } }
