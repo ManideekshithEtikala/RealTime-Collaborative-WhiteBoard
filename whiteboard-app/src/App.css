@@ -129,7 +129,7 @@
 .footer-note i { width: 4px; height: 4px; border-radius: 50%; background: #adbcae; }
 
 /* The shared workspace. */
-.board-page { min-height: 100dvh; background: #f7f8fc; padding-bottom: 8px; }
+.board-page { min-height: 100dvh; background: #f7f8fc; padding-bottom: 8px; display: flex; flex-direction: column; }
 .board-header { display: flex; align-items: center; justify-content: space-between; gap: 22px; background: #fff; border-bottom: 1px solid #e7eaf2; padding: 16px 28px; }
 .board-heading { display: flex; align-items: center; gap: 23px; min-width: 0; }
 .header-divider { width: 1px; height: 29px; background: #e8eaf2; }
@@ -241,7 +241,7 @@
 .chat-send { display: inline-flex; justify-content: center; align-items: center; background: #8c86d6; border: 0; color: white; width: 29px; height: 29px; border-radius: 6px; }
 .chat-send:hover:not(:disabled) { background: #6366f1; }
 .chat-footnote { text-align: center; color: #c0c5d0; font-size: 7px; margin: 10px 0 14px; }
-.board-bottom { display: flex; justify-content: space-between; padding: 15px 30px 5px; font-size: 8px; color: #a8b0c1; }
+.board-bottom { display: flex; justify-content: space-between; padding: 15px 30px 5px; font-size: 8px; color: #a8b0c1; margin-top: auto; }
 .board-bottom a { display: flex; align-items: center; gap: 5px; }
 .board-bottom a:hover { color: #6366f1; }
 .connection-banner { background: #fff5ec; color: #a87752; border: 1px solid #f1dfd0; border-radius: 8px; padding: 9px 13px; margin: -4px 28px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; line-height: 1.6; }
@@ -283,6 +283,46 @@
 .canvas-empty strong, .chat-empty strong { color: #7e89a0; }
 .canvas-empty > span:not(.empty-pencil), .chat-empty p { color: #909bad; }
 .canvas-dialog > p:not(.form-error) { color: #748098; }
+
+/* Legible chrome: nothing below 10px and no washed-out grey on white. */
+.eyebrow { font-size: 11px; color: #78829a; letter-spacing: 1.5px; }
+.room-eyebrow { font-size: 9px; color: #8a92a5; }
+.room-id > span { color: #6f7a90; }
+.connection-status { font-size: 11px; color: #65708a; }
+.status-connected { color: #3d7a62; }
+.share-button { font-size: 12px; }
+.tool-button { font-size: 11px; }
+.export-controls { font-size: 11px; }
+.export-controls button { font-size: 11px; padding: 6px 8px; }
+.option-label { font-size: 11px; color: #65708a; }
+.brush-control > span:last-child { font-size: 11px; color: #65708a; }
+.clear-button { font-size: 11px; color: #a4636f; }
+.save-indicator, .canvas-footer { font-size: 11px; color: #65708a; }
+.keyboard-hint { font-size: 10px; color: #7a8497; }
+.keyboard-hint kbd { color: #55607a; border-color: #dde1ec; }
+.canvas-meta { font-size: 10px; color: #7a8497; }
+.canvas-meta .meta-divider { color: #a5adbd; }
+.canvas-empty strong { color: #5d6880; }
+.canvas-empty > span:not(.empty-pencil) { color: #7a8497; }
+.canvas-empty .empty-shortcut { font-size: 10px; color: #98a0b0; }
+.participant-count { font-size: 11px; }
+.participant-name small, .participant.waiting small { font-size: 10px; }
+.invite-hint { font-size: 10px; color: #7a8497; }
+.subtle-tag { font-size: 8px; color: #8b85a0; }
+.message-byline time { font-size: 9px; color: #8b93a3; }
+.chat-empty p { color: #7a8497; }
+.chat-compose input::placeholder { color: #8b93a3; }
+.chat-footnote { font-size: 10px; color: #8b93a3; }
+.guest-identity label > span { font-size: 8px; color: #7b8398; }
+.guest-badge { font-size: 9px; color: #7b8398; }
+.hero-eyebrow { font-size: 10px; }
+.hero-reassurance { font-size: 11px; color: #7a8497; }
+.section-header > span { font-size: 9px; color: #8a92a5; }
+.recent-board strong { font-size: 11px; }
+.recent-board small { font-size: 10px; }
+.text-field::placeholder { color: #7b8497; }
+.board-bottom { font-size: 10px; color: #7a8497; }
+.classifier-link { font-size: 11px; }
 
 @media (min-width: 1550px) {
   .board-layout { grid-template-columns: minmax(0, 1fr) 310px; }
@@ -379,14 +419,18 @@
   .landing-footer { padding: 23px 0; }
   .landing-footer .canvas-brand { font-size: 14px; }
   .landing-footer .footer-note { font-size: 8px; }
+  /* Two tidy rows: brand and actions, then the board identity on its own line. */
+  .board-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    column-gap: 10px; row-gap: 8px; padding: 13px 15px; }
+  .board-heading { display: contents; }
+  .board-heading .brand-link { grid-area: 1 / 1; min-width: 0; }
   .board-heading .header-divider { display: none; }
-  .board-heading { flex-wrap: wrap; gap: 7px; }
-  .room-heading { display: block; flex-basis: 100%; }
+  .room-heading { display: block; grid-area: 2 / 1 / 3 / 3; min-width: 0; }
   .room-eyebrow { display: none; }
-  .room-id { font-size: 8px; }
-  .room-id > span { max-width: 140px; }
+  .room-id { font-size: 10px; }
+  .room-id > span { max-width: 100%; }
+  .board-header-actions { grid-area: 1 / 2; }
   .board-layout { grid-template-columns: 1fr; gap: 14px; padding: 0 14px; }
-  .board-header { flex-wrap: wrap; padding: 13px 15px; gap: 13px; }
   .board-header-actions { gap: 8px; }
   .board-header .canvas-brand { font-size: 14px; }
   .board-header .brand-mark { width: 26px; height: 26px; }
@@ -406,9 +450,9 @@
   .canvas-options { flex-wrap: nowrap; padding: 12px 15px; gap: 13px; }
   .color-controls { gap: 6px; }
   .brush-control input { width: 60px; }
-  .canvas-viewport { height: max(340px, calc(100dvh - 306px)); min-height: 300px; }
-  .canvas-empty strong { font-size: 11px; }
-  .canvas-empty > span:not(.empty-pencil) { font-size: 8px; }
+  .canvas-viewport { height: clamp(260px, 40dvh, 420px); min-height: 0; }
+  .canvas-empty strong { font-size: 12px; }
+  .canvas-empty > span:not(.empty-pencil) { font-size: 10px; }
   .empty-pencil { width: 42px; height: 42px; border-radius: 13px; }
   .canvas-empty .empty-shortcut { margin-top: 5px; }
   .canvas-footer { padding: 11px 13px; }
@@ -451,7 +495,7 @@
   .tool-button { padding: 7px 6px; }
   .history-controls .icon-button { width: 26px; }
   .export-controls { gap: 4px; }
-  .export-controls button { font-size: 8px; padding: 6px 4px; }
+  .export-controls button { font-size: 10px; padding: 6px 5px; }
   .canvas-options { padding: 11px; gap: 8px; }
   .color-controls { gap: 5px; }
   .brush-control .option-label { display: none; }

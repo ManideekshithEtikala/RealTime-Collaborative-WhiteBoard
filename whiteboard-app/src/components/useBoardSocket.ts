@@ -19,6 +19,7 @@ export default function useBoardSocket(sessionId: string, profile: GuestProfile)
   const [previews, setPreviews] = useState<Record<string, Preview>>({});
   const [pending, setPending] = useState<BoardObject[]>([]);
   const [busy, setBusy] = useState(false);
+  const [socketId, setSocketId] = useState('');
   const socketRef = useRef<Socket | null>(null);
   const joined = useRef(false);
   const requests = useRef(0);
@@ -29,6 +30,7 @@ export default function useBoardSocket(sessionId: string, profile: GuestProfile)
     joined.current = false;
     requests.current = 0;
     setBusy(false);
+    setSocketId('');
     setPending([]);
     setPreviews({});
     setCursors([]);
@@ -80,6 +82,7 @@ export default function useBoardSocket(sessionId: string, profile: GuestProfile)
       resetConnection();
       // There must never be a queued offline edit replayed into a fresh authoritative state.
       socket.sendBuffer = [];
+      setSocketId(socket.id || '');
       setStatus('joining');
       joinTimer = setTimeout(() => {
         if (!active || joined.current) return;
@@ -150,6 +153,7 @@ export default function useBoardSocket(sessionId: string, profile: GuestProfile)
     socket.on('disconnect', () => {
       if (!active) return;
       resetConnection();
+      setSocketId('');
       setStatus('offline');
       setError('Connection lost. Editing is paused while we reconnect and reload the board.');
     });
@@ -228,5 +232,5 @@ export default function useBoardSocket(sessionId: string, profile: GuestProfile)
 
   return { ...state, status, ready: status === 'connected', error, setError, cursors,
     previews: Object.values(previews).map(p => p.line), pending, busy, request, commit,
-    sendCursor, sendPreview, reconnect, socketId: socketRef.current?.id };
+    sendCursor, sendPreview, reconnect, socketId };
 }

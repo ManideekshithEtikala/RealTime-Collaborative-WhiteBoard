@@ -1,0 +1,33 @@
+# One-service deploy: the Docker image builds the React app and serves it from the
+# same Express + Socket.IO process, so the browser only ever talks to one origin.
+# No API keys, database URLs, or third-party accounts are needed.
+
+services:
+  - type: web
+    name: canvas-together
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DATA_DIR
+        value: /data
+
+    # Boards are stored in SQLite under DATA_DIR. On the free plan that directory
+    # is container-local, so boards survive redeploys of the same instance but not
+    # a restart, and free instances spin down after 15 minutes idle (the first
+    # request afterwards takes ~50s to wake up).
+    #
+    # For durable boards, switch to the Starter plan and attach the disk:
+    # plan: starter
+    # disk:
+    #   name: whiteboard-data
+    #   mountPath: /data
+    #   sizeGB: 1
